@@ -39,7 +39,7 @@ docker compose up -d postgres
 cd backend
 cp .env.example .env
 npm install
-npx prisma migrate dev --name init
+npx prisma migrate deploy
 npm run start:dev
 ```
 
