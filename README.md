@@ -43,6 +43,16 @@ npm run start:dev
 
 API em `http://localhost:3000`, docs Swagger em `http://localhost:3000/docs`.
 
+### Testes e2e
+
+Rodam contra o banco real (limpa as tabelas entre specs) — precisa do postgres em pé e `.env` configurado.
+
+```bash
+npm run test:e2e
+```
+
+Cobre auth (registro, login, mensagem genérica de credencial inválida), guards de role em `products`, e o fluxo completo de checkout — inclui o cenário de estoque concorrente e cancelamento de pedido.
+
 ## Roadmap
 
 - [x] Arquitetura + schema Prisma
@@ -51,6 +61,6 @@ API em `http://localhost:3000`, docs Swagger em `http://localhost:3000/docs`.
 - [x] CRUD produtos/categorias (admin)
 - [x] Carrinho
 - [x] Checkout + Stripe webhook
-- [ ] Testes e2e
+- [x] Testes e2e
 - [ ] CI (GitHub Actions)
 - [ ] Collection Postman/Insomnia
