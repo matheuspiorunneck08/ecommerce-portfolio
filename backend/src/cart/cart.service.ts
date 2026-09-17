@@ -12,12 +12,12 @@ export class CartService {
     private products: ProductsService,
   ) {}
 
-  async getOrCreateCart(userId: string) {
-    const cart = await this.findCartByUserId(userId);
-    if (cart) return cart;
-
-    return this.prisma.cart.create({
-      data: { userId },
+  getOrCreateCart(userId: string) {
+    // upsert avoids the check-then-create race of findUnique + create
+    return this.prisma.cart.upsert({
+      where: { userId },
+      update: {},
+      create: { userId },
       include: { items: { include: { product: true } } },
     });
   }
@@ -40,11 +40,10 @@ export class CartService {
   }
 
   async updateItem(userId: string, productId: string, dto: UpdateCartItemDto) {
-    const product = await this.products.findById(productId);
-    if (dto.quantity > product.stock) throw new InsufficientStockError(product.stock);
-
     const cart = await this.getOrCreateCart(userId);
-    await this.assertItemExists(cart.id, productId);
+    const item = cart.items.find((i) => i.productId === productId);
+    if (!item) throw new NotFoundError('Cart item');
+    if (dto.quantity > item.product.stock) throw new InsufficientStockError(item.product.stock);
 
     await this.prisma.cartItem.update({
       where: { cartId_productId: { cartId: cart.id, productId } },
@@ -56,7 +55,8 @@ export class CartService {
 
   async removeItem(userId: string, productId: string) {
     const cart = await this.getOrCreateCart(userId);
-    await this.assertItemExists(cart.id, productId);
+    const item = cart.items.find((i) => i.productId === productId);
+    if (!item) throw new NotFoundError('Cart item');
 
     await this.prisma.cartItem.delete({
       where: { cartId_productId: { cartId: cart.id, productId } },
@@ -68,19 +68,5 @@ export class CartService {
   async clear(userId: string) {
     const cart = await this.getOrCreateCart(userId);
     await this.prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
-  }
-
-  private findCartByUserId(userId: string) {
-    return this.prisma.cart.findUnique({
-      where: { userId },
-      include: { items: { include: { product: true } } },
-    });
-  }
-
-  private async assertItemExists(cartId: string, productId: string) {
-    const item = await this.prisma.cartItem.findUnique({
-      where: { cartId_productId: { cartId, productId } },
-    });
-    if (!item) throw new NotFoundError('Cart item');
   }
 }
