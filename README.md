@@ -1,5 +1,7 @@
 # Ecommerce Portfolio
 
+[![CI](https://github.com/matheuspiorunneck08/ecommerce-portfolio/actions/workflows/ci.yml/badge.svg)](https://github.com/matheuspiorunneck08/ecommerce-portfolio/actions/workflows/ci.yml)
+
 API REST de e-commerce pra portfólio: NestJS + Prisma + PostgreSQL. Foco em backend — auth, transações, tratamento de erro, integração de pagamento.
 
 ## Stack
@@ -62,5 +64,6 @@ Cobre auth (registro, login, mensagem genérica de credencial inválida), guards
 - [x] Carrinho
 - [x] Checkout + Stripe webhook
 - [x] Testes e2e
-- [ ] CI (GitHub Actions)
+- [x] CI (GitHub Actions)
+- [ ] ESLint config
 - [ ] Collection Postman/Insomnia
