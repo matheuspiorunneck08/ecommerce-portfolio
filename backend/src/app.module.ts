@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { validateEnv } from './config/env.validation';
@@ -16,7 +16,19 @@ import { PaymentsModule } from './payments/payments.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv }),
-    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      // e2e specs run serially against one shared DB/IP and legitimately
+      // make many auth calls back-to-back — real users never do that
+      useFactory: (config: ConfigService) => [
+        {
+          name: 'default',
+          ttl: 60000,
+          limit: 100,
+          skipIf: () => config.get<string>('NODE_ENV') === 'test',
+        },
+      ],
+    }),
     PrismaModule,
     AuthModule,
     UsersModule,
