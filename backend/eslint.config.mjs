@@ -10,12 +10,14 @@ export default tseslint.config(
     languageOptions: {
       globals: { ...globals.node, ...globals.jest },
       parserOptions: {
-        projectService: true,
+        projectService: {
+          allowDefaultProject: ['eslint.config.mjs'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },
     rules: {
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', ignoreRestSiblings: true }],
       '@typescript-eslint/no-explicit-any': 'warn',
       '@typescript-eslint/no-floating-promises': 'warn',
     },

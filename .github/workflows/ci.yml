@@ -47,8 +47,7 @@ jobs:
         with:
           node-version: 22
 
-      # no package-lock.json committed yet — switch to `npm ci` once one exists
-      - run: npm install
+      - run: npm ci
 
       - run: npx prisma generate
 

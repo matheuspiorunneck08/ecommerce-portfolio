@@ -14,7 +14,7 @@ export class PaymentsService {
     private prisma: PrismaService,
     private config: ConfigService,
   ) {
-    this.stripe = new Stripe(this.config.get<string>('STRIPE_SECRET_KEY'));
+    this.stripe = new Stripe(this.config.getOrThrow<string>('STRIPE_SECRET_KEY'));
   }
 
   async createCheckoutSession(userId: string, orderId: string) {
@@ -37,8 +37,8 @@ export class PaymentsService {
           product_data: { name: item.productName },
         },
       })),
-      success_url: `${this.config.get<string>('FRONTEND_URL')}/orders/${order.id}?payment=success`,
-      cancel_url: `${this.config.get<string>('FRONTEND_URL')}/orders/${order.id}?payment=cancelled`,
+      success_url: `${this.config.getOrThrow<string>('FRONTEND_URL')}/orders/${order.id}?payment=success`,
+      cancel_url: `${this.config.getOrThrow<string>('FRONTEND_URL')}/orders/${order.id}?payment=cancelled`,
       metadata: { orderId: order.id },
     });
 
@@ -56,7 +56,7 @@ export class PaymentsService {
       event = this.stripe.webhooks.constructEvent(
         rawBody,
         signature,
-        this.config.get<string>('STRIPE_WEBHOOK_SECRET'),
+        this.config.getOrThrow<string>('STRIPE_WEBHOOK_SECRET'),
       );
     } catch {
       throw new BadRequestError('Invalid webhook signature');
@@ -64,12 +64,12 @@ export class PaymentsService {
 
     if (event.type === 'checkout.session.completed') {
       const session = event.data.object as Stripe.Checkout.Session;
-      await this.markOrderPaid(session.metadata.orderId);
+      await this.markOrderPaid(session.metadata?.orderId);
     }
 
     if (event.type === 'checkout.session.expired') {
       const session = event.data.object as Stripe.Checkout.Session;
-      await this.markPaymentFailed(session.metadata.orderId);
+      await this.markPaymentFailed(session.metadata?.orderId);
     }
   }
 

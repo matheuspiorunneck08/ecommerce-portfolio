@@ -43,7 +43,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       const status = exception.getStatus();
       const body = exception.getResponse();
-      const message = typeof body === 'string' ? body : (body as any).message;
+      const message = typeof body === 'string' ? body : (body as { message: string }).message;
       response.status(status).json({
         error: { code: 'BAD_REQUEST', message },
       });

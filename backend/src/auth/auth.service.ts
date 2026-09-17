@@ -50,7 +50,7 @@ export class AuthService {
   private verifyRefreshToken(refreshToken: string) {
     try {
       return this.jwt.verify<{ sub: string }>(refreshToken, {
-        secret: this.config.get<string>('JWT_REFRESH_SECRET'),
+        secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
       });
     } catch {
       throw new UnauthorizedError('Invalid refresh token');
@@ -61,13 +61,13 @@ export class AuthService {
     const payload = { sub: user.id, email: user.email, role: user.role };
 
     const accessToken = this.jwt.sign(payload, {
-      secret: this.config.get<string>('JWT_SECRET'),
-      expiresIn: this.config.get<string>('JWT_ACCESS_EXPIRES'),
+      secret: this.config.getOrThrow<string>('JWT_SECRET'),
+      expiresIn: this.config.getOrThrow<string>('JWT_ACCESS_EXPIRES'),
     });
 
     const refreshToken = this.jwt.sign(payload, {
-      secret: this.config.get<string>('JWT_REFRESH_SECRET'),
-      expiresIn: this.config.get<string>('JWT_REFRESH_EXPIRES'),
+      secret: this.config.getOrThrow<string>('JWT_REFRESH_SECRET'),
+      expiresIn: this.config.getOrThrow<string>('JWT_REFRESH_EXPIRES'),
     });
 
     return { accessToken, refreshToken };
