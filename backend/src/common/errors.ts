@@ -31,3 +31,9 @@ export class ForbiddenError extends AppError {
     super(message, 403, 'FORBIDDEN');
   }
 }
+
+export class InsufficientStockError extends AppError {
+  constructor(available: number) {
+    super(`Only ${available} unit(s) in stock`, 409, 'INSUFFICIENT_STOCK');
+  }
+}
