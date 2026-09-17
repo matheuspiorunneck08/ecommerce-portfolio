@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { slugify } from '../common/slugify';
-import { NotFoundError } from '../common/errors';
+import { NotFoundError, ConflictError } from '../common/errors';
 import { CreateCategoryDto } from './dto/create-category.dto';
 import { UpdateCategoryDto } from './dto/update-category.dto';
 
@@ -38,7 +38,12 @@ export class CategoriesService {
 
   async remove(id: string) {
     await this.findById(id);
-    // ProductCategory.category has onDelete: Cascade — join rows go with it
+
+    const productCount = await this.prisma.productCategory.count({ where: { categoryId: id } });
+    if (productCount > 0) {
+      throw new ConflictError(`Category is linked to ${productCount} product(s), unlink before deleting`);
+    }
+
     await this.prisma.category.delete({ where: { id } });
   }
 }
