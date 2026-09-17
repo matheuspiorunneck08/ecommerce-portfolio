@@ -1,0 +1,28 @@
+import { Injectable } from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
+import { Role } from '@prisma/client';
+
+interface CreateUserInput {
+  name: string;
+  email: string;
+  passwordHash: string;
+}
+
+@Injectable()
+export class UsersService {
+  constructor(private prisma: PrismaService) {}
+
+  findByEmail(email: string) {
+    return this.prisma.user.findUnique({ where: { email } });
+  }
+
+  findById(id: string) {
+    return this.prisma.user.findUnique({ where: { id } });
+  }
+
+  create(data: CreateUserInput) {
+    return this.prisma.user.create({
+      data: { ...data, role: Role.CUSTOMER },
+    });
+  }
+}
