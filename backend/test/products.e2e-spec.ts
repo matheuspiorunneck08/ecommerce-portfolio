@@ -88,7 +88,7 @@ describe('Products (e2e)', () => {
   });
 
   it('rejects a duplicate product name with 409', async () => {
-    const payload = { name: 'Same Name', description: 'First one', priceCents: 1000, stock: 5 };
+    const payload = { name: 'Same Name', description: 'First one in stock', priceCents: 1000, stock: 5 };
     await request(app.getHttpServer())
       .post('/products')
       .set('Authorization', `Bearer ${adminToken}`)
