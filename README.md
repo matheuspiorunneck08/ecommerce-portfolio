@@ -55,6 +55,15 @@ npm run test:e2e
 
 Cobre auth (registro, login, mensagem genérica de credencial inválida), guards de role em `products`, e o fluxo completo de checkout — inclui o cenário de estoque concorrente e cancelamento de pedido.
 
+### Testando via Postman
+
+Collection + environment em `docs/`:
+
+1. Importe `docs/ecommerce-portfolio.postman_collection.json` e `docs/local.postman_environment.json`
+2. Rode `Auth → Register` — token de customer é salvo automaticamente na variável de coleção
+3. Pra rotas admin (`Products (Admin)`, `Categories (Admin)`, `Update Order Status`): promova o usuário registrado pra `ADMIN` direto no banco (`npx prisma studio`, ou `UPDATE users SET role = 'ADMIN' WHERE email = '...'`) — não existe endpoint de auto-promoção, é intencional — depois rode `Auth → Login as Admin`
+4. Siga as pastas em ordem: Products → Categories → Addresses → Cart → Orders → Payments
+
 ## Roadmap
 
 - [x] Arquitetura + schema Prisma
@@ -66,4 +75,4 @@ Cobre auth (registro, login, mensagem genérica de credencial inválida), guards
 - [x] Testes e2e
 - [x] CI (GitHub Actions)
 - [x] ESLint config
-- [ ] Collection Postman/Insomnia
+- [x] Collection Postman
