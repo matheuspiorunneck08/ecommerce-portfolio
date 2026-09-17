@@ -1,16 +1,16 @@
 # Ecommerce Portfolio
 
-E-commerce full stack pra portfólio: NestJS + Prisma + PostgreSQL no backend, React + Vite no frontend.
+API REST de e-commerce pra portfólio: NestJS + Prisma + PostgreSQL. Foco em backend — auth, transações, tratamento de erro, integração de pagamento.
 
 ## Stack
 
-- **Backend**: NestJS, Prisma ORM, PostgreSQL, JWT auth, Stripe (test mode)
-- **Frontend**: React + Vite, React Router, Axios
-- **Infra**: Docker Compose (postgres + backend)
-- **Testes**: Jest (unit + e2e)
+- **NestJS** + **Prisma ORM** + **PostgreSQL**
+- **Auth**: JWT (access + refresh), bcrypt, guards por role
+- **Pagamento**: Stripe (test mode) — checkout session + webhook
+- **Infra**: Docker Compose
 - **Docs**: Swagger em `/docs`
 
-## Módulos backend
+## Módulos
 
 `auth` `users` `products` `categories` `addresses` `cart` `orders` `payments`
 
@@ -21,27 +21,27 @@ products ↔ categories (N:N via product_categories)
 cart → cart_items → products
 orders → order_items (snapshot preço/nome) → payment
 
+## Decisões técnicas
+
+- Erros centralizados num único filter (`AppError` + mapeamento de erros do Prisma) — nenhum service faz try/catch próprio
+- Transições de status de pedido validadas numa única fonte (`canTransition`), compartilhada entre `orders` e o webhook do Stripe — evita estado inconsistente entre os dois fluxos
+- Decremento de estoque atômico (`updateMany` com guard `stock >= quantity`) — fecha race condition em checkouts concorrentes
+- Webhook idempotente — ignora eventos atrasados/duplicados que não representam transição válida
+- Env validado no boot com Zod — app não sobe com config inválida
+
 ## Setup local
 
 ```bash
-# 1. subir postgres
 docker compose up -d postgres
 
-# 2. backend
 cd backend
 cp .env.example .env
 npm install
 npx prisma migrate dev --name init
 npm run start:dev
-
-# 3. frontend (outro terminal)
-cd frontend
-npm install
-npm run dev
 ```
 
-API disponível em `http://localhost:3000`, docs Swagger em `http://localhost:3000/docs`.
-Frontend em `http://localhost:5173`.
+API em `http://localhost:3000`, docs Swagger em `http://localhost:3000/docs`.
 
 ## Roadmap
 
@@ -51,6 +51,6 @@ Frontend em `http://localhost:5173`.
 - [x] CRUD produtos/categorias (admin)
 - [x] Carrinho
 - [x] Checkout + Stripe webhook
-- [ ] Painel admin (frontend)
 - [ ] Testes e2e
 - [ ] CI (GitHub Actions)
+- [ ] Collection Postman/Insomnia
