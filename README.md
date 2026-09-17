@@ -65,5 +65,5 @@ Cobre auth (registro, login, mensagem genérica de credencial inválida), guards
 - [x] Checkout + Stripe webhook
 - [x] Testes e2e
 - [x] CI (GitHub Actions)
-- [ ] ESLint config
+- [x] ESLint config
 - [ ] Collection Postman/Insomnia

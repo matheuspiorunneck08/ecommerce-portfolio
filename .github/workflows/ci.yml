@@ -45,7 +45,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       # no package-lock.json committed yet — switch to `npm ci` once one exists
       - run: npm install
@@ -53,6 +53,8 @@ jobs:
       - run: npx prisma generate
 
       - run: npx prisma migrate deploy
+
+      - run: npm run lint
 
       - run: npm run build
 
