@@ -32,6 +32,12 @@ export class ForbiddenError extends AppError {
   }
 }
 
+export class BadRequestError extends AppError {
+  constructor(message: string) {
+    super(message, 400, 'BAD_REQUEST');
+  }
+}
+
 export class InsufficientStockError extends AppError {
   constructor(available: number) {
     super(`Only ${available} unit(s) in stock`, 409, 'INSUFFICIENT_STOCK');

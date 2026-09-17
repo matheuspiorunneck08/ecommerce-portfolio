@@ -8,6 +8,7 @@ const envSchema = z.object({
   JWT_REFRESH_EXPIRES: z.string().default('7d'),
   STRIPE_SECRET_KEY: z.string(),
   STRIPE_WEBHOOK_SECRET: z.string(),
+  FRONTEND_URL: z.string().url().default('http://localhost:5173'),
   PORT: z.coerce.number().default(3000),
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
 });

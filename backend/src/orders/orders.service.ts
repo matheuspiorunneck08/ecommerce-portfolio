@@ -7,6 +7,14 @@ import { CreateOrderDto } from './dto/create-order.dto';
 
 const ORDER_INCLUDE = { items: true, payment: true } as const;
 
+const ALLOWED_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
+  PENDING: [OrderStatus.PAID, OrderStatus.CANCELLED],
+  PAID: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
+  SHIPPED: [OrderStatus.DELIVERED],
+  DELIVERED: [],
+  CANCELLED: [],
+};
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -23,6 +31,9 @@ export class OrdersService {
     });
     if (!cart || cart.items.length === 0) throw new ConflictError('Cart is empty');
 
+    // fast-fail before opening the transaction; the real guarantee is the
+    // atomic per-row decrement below, which closes the race two concurrent
+    // checkouts would have against this stale read
     for (const item of cart.items) {
       if (item.quantity > item.product.stock) throw new InsufficientStockError(item.product.stock);
     }
@@ -30,6 +41,14 @@ export class OrdersService {
     const totalCents = cart.items.reduce((sum, item) => sum + item.quantity * item.product.priceCents, 0);
 
     return this.prisma.$transaction(async (tx) => {
+      for (const item of cart.items) {
+        const result = await tx.product.updateMany({
+          where: { id: item.productId, stock: { gte: item.quantity } },
+          data: { stock: { decrement: item.quantity } },
+        });
+        if (result.count === 0) throw new InsufficientStockError(0);
+      }
+
       const order = await tx.order.create({
         data: {
           userId,
@@ -47,13 +66,6 @@ export class OrdersService {
         },
         include: ORDER_INCLUDE,
       });
-
-      for (const item of cart.items) {
-        await tx.product.update({
-          where: { id: item.productId },
-          data: { stock: { decrement: item.quantity } },
-        });
-      }
 
       await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
 
@@ -80,8 +92,24 @@ export class OrdersService {
   }
 
   async updateStatus(id: string, status: OrderStatus) {
-    const order = await this.prisma.order.findUnique({ where: { id } });
+    const order = await this.prisma.order.findUnique({ where: { id }, include: { items: true } });
     if (!order) throw new NotFoundError('Order');
+
+    if (!ALLOWED_STATUS_TRANSITIONS[order.status].includes(status)) {
+      throw new ConflictError(`Cannot move order from ${order.status} to ${status}`);
+    }
+
+    if (status === OrderStatus.CANCELLED) {
+      return this.prisma.$transaction(async (tx) => {
+        for (const item of order.items) {
+          await tx.product.update({
+            where: { id: item.productId },
+            data: { stock: { increment: item.quantity } },
+          });
+        }
+        return tx.order.update({ where: { id }, data: { status } });
+      });
+    }
 
     return this.prisma.order.update({ where: { id }, data: { status } });
   }
