@@ -12,7 +12,7 @@ E-commerce full stack pra portfólio: NestJS + Prisma + PostgreSQL no backend, R
 
 ## Módulos backend
 
-`auth` `users` `products` `categories` `cart` `orders` `payments`
+`auth` `users` `products` `categories` `addresses` `cart` `orders` `payments`
 
 ## Schema (resumo)
 
@@ -48,9 +48,9 @@ Frontend em `http://localhost:5173`.
 - [x] Arquitetura + schema Prisma
 - [x] Env validation (startup) + error handling centralizado
 - [x] Auth (JWT + refresh + guards por role)
-- [ ] CRUD produtos/categorias (admin)
-- [ ] Carrinho
-- [ ] Checkout + Stripe webhook
+- [x] CRUD produtos/categorias (admin)
+- [x] Carrinho
+- [x] Checkout + Stripe webhook
 - [ ] Painel admin (frontend)
 - [ ] Testes e2e
 - [ ] CI (GitHub Actions)

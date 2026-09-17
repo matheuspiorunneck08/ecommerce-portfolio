@@ -3,17 +3,10 @@ import { OrderStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { AddressesService } from '../addresses/addresses.service';
 import { ConflictError, ForbiddenError, InsufficientStockError, NotFoundError } from '../common/errors';
+import { canTransition } from '../common/order-status-transitions';
 import { CreateOrderDto } from './dto/create-order.dto';
 
 const ORDER_INCLUDE = { items: true, payment: true } as const;
-
-const ALLOWED_STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  PENDING: [OrderStatus.PAID, OrderStatus.CANCELLED],
-  PAID: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
-  SHIPPED: [OrderStatus.DELIVERED],
-  DELIVERED: [],
-  CANCELLED: [],
-};
 
 @Injectable()
 export class OrdersService {
@@ -46,7 +39,13 @@ export class OrdersService {
           where: { id: item.productId, stock: { gte: item.quantity } },
           data: { stock: { decrement: item.quantity } },
         });
-        if (result.count === 0) throw new InsufficientStockError(0);
+        if (result.count === 0) {
+          const current = await tx.product.findUnique({
+            where: { id: item.productId },
+            select: { stock: true },
+          });
+          throw new InsufficientStockError(current?.stock ?? 0);
+        }
       }
 
       const order = await tx.order.create({
@@ -95,7 +94,7 @@ export class OrdersService {
     const order = await this.prisma.order.findUnique({ where: { id }, include: { items: true } });
     if (!order) throw new NotFoundError('Order');
 
-    if (!ALLOWED_STATUS_TRANSITIONS[order.status].includes(status)) {
+    if (!canTransition(order.status, status)) {
       throw new ConflictError(`Cannot move order from ${order.status} to ${status}`);
     }
 

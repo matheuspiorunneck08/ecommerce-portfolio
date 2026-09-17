@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
+import { OrderStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { BadRequestError, ConflictError, ForbiddenError, NotFoundError } from '../common/errors';
+import { canTransition } from '../common/order-status-transitions';
 
 @Injectable()
 export class PaymentsService {
@@ -71,14 +73,26 @@ export class PaymentsService {
     }
   }
 
-  private async markOrderPaid(orderId: string) {
+  // webhook deliveries can repeat or arrive late — only act while the order
+  // is still in a state that legitimately allows the transition
+  private async markOrderPaid(orderId: string | undefined) {
+    if (!orderId) return;
+
+    const order = await this.prisma.order.findUnique({ where: { id: orderId } });
+    if (!order || !canTransition(order.status, OrderStatus.PAID)) return;
+
     await this.prisma.$transaction([
       this.prisma.payment.update({ where: { orderId }, data: { status: 'SUCCEEDED' } }),
       this.prisma.order.update({ where: { id: orderId }, data: { status: 'PAID' } }),
     ]);
   }
 
-  private markPaymentFailed(orderId: string) {
-    return this.prisma.payment.update({ where: { orderId }, data: { status: 'FAILED' } });
+  private async markPaymentFailed(orderId: string | undefined) {
+    if (!orderId) return;
+
+    const payment = await this.prisma.payment.findUnique({ where: { orderId } });
+    if (!payment || payment.status !== 'PENDING') return;
+
+    await this.prisma.payment.update({ where: { orderId }, data: { status: 'FAILED' } });
   }
 }
