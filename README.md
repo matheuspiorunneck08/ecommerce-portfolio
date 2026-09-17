@@ -30,6 +30,7 @@ orders → order_items (snapshot preço/nome) → payment
 - Decremento de estoque atômico (`updateMany` com guard `stock >= quantity`) — fecha race condition em checkouts concorrentes
 - Webhook idempotente — ignora eventos atrasados/duplicados que não representam transição válida
 - Env validado no boot com Zod — app não sobe com config inválida
+- Rate limit de auth desativado só em `NODE_ENV=test` (`skipIf` no Throttler) — suíte e2e roda serial contra um DB compartilhado e faz vários logins legítimos em sequência; produção mantém o limite real
 
 ## Setup local
 
@@ -76,3 +77,8 @@ Collection + environment em `docs/`:
 - [x] CI (GitHub Actions)
 - [x] ESLint config
 - [x] Collection Postman
+
+## Autor
+
+**Matheus Piorunneck**
+[GitHub](https://github.com/matheuspiorunneck08) · [LinkedIn](https://www.linkedin.com/in/matheus-piorunneck-8255243b8)
